@@ -1,0 +1,25 @@
+name = "url-shortener"
+compatibility_date = "2024-04-11"
+workers_dev = true
+main = "src/index.ts"
+
+# [vars]
+# MY_VAR = "my-variable"
+
+kv_namespaces = [
+  { binding = "URL_MAPPINGS", id = "" },
+  { binding = "URL_ANALYTICS", id = "" },
+  { binding = "API_KEYS", id = "" }
+]
+
+# [[r2_buckets]]
+# binding = "MY_BUCKET"
+# bucket_name = "my-bucket"
+
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "my-database"
+# database_id = ""
+
+# [ai]
+# binding = "AI"
