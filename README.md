@@ -9,6 +9,10 @@ A simple and efficient URL shortener built with Cloudflare Workers, Hono, and Ty
 - Track click analytics for each short URL
 - API key authentication for secure access to the API endpoints
 - Duplicate URL detection to prevent creating multiple short URLs for the same long URL
+- Support for custom short codes
+- Expiration time for short URLs
+- Rate limiting to prevent abuse
+- Input validation and error handling
 
 ## Prerequisites
 
@@ -50,7 +54,6 @@ A simple and efficient URL shortener built with Cloudflare Workers, Hono, and Ty
 ## Usage
 
 1. Start the development server:
-
    ```bash
    npm run dev
    ```
@@ -63,7 +66,23 @@ A simple and efficient URL shortener built with Cloudflare Workers, Hono, and Ty
 
    Replace `your-api-key` with your actual API key.
 
-3. Access the short URL:
+3. Create a short URL with a custom short code:
+
+   ```bash
+   curl -X POST -H "Content-Type: application/json" -H "X-API-Key: your-api-key" -d '{"url": "https://example.com/long-url", "customCode": "my-custom-code"}' http://localhost:8787/api/urls
+   ```
+
+   Replace `your-api-key` with your actual API key and `my-custom-code` with your desired custom short code.
+
+4. Create a short URL with an expiration time:
+
+   ```bash
+   curl -X POST -H "Content-Type: application/json" -H "X-API-Key: your-api-key" -d '{"url": "https://example.com/long-url", "expiresIn": 3600}' http://localhost:8787/api/urls
+   ```
+
+   Replace `your-api-key` with your actual API key and `3600` with the desired expiration time in seconds (e.g., 3600 seconds = 1 hour).
+
+5. Access the short URL:
 
    ```bash
    curl -L http://localhost:8787/short-code
@@ -71,13 +90,26 @@ A simple and efficient URL shortener built with Cloudflare Workers, Hono, and Ty
 
    Replace `short-code` with the generated short code.
 
-4. Get URL analytics:
+6. Get URL analytics:
 
    ```bash
    curl -H "X-API-Key: your-api-key" http://localhost:8787/api/analytics/short-code
    ```
 
    Replace `your-api-key` with your actual API key and `short-code` with the short code you want to retrieve analytics for.
+
+## Setting Expiration Time
+
+To set an expiration time for a short URL, include the `expiresIn` parameter in the request payload when creating the short URL. The value should be in seconds.
+
+For example, to create a short URL that expires in 1 hour (3600 seconds):
+
+```bash
+curl -X POST -H "Content-Type: application/json" -H "X-API-Key: your-api-key" -d '{"url": "https://example.com/long-url", "expiresIn": 3600}' http://localhost:8787/api/urls
+```
+
+If the `expiresIn` parameter is not provided, the short URL will not have an expiration time and will remain valid indefinitely.
+When a short URL with an expiration time is accessed after its expiration, a 404 (Not Found) error will be returned, and the short URL will be automatically deleted from the system.
 
 ## Deployment
 
