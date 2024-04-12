@@ -11,7 +11,6 @@ type Env = {
   URL_MAPPINGS: KVNamespace
   URL_ANALYTICS: KVNamespace
   API_KEYS: KVNamespace
-  CUSTOM_DOMAINS: KVNamespace
   REDIRECT_URL: string
   ALLOWED_CORS_ORIGINS: string
   OG_METADATA_CACHE: KVNamespace
@@ -69,12 +68,6 @@ const createUrlSchema = z.object({
   ogTitle: z.string().optional(),
   ogDescription: z.string().optional(),
   ogImage: z.string().url().optional(),
-})
-
-// Schema for custom domain mapping
-const customDomainSchema = z.object({
-  domain: z.string().url(),
-  target: z.string().url(),
 })
 
 // Schema for URL update request
@@ -216,13 +209,6 @@ app.delete('/api/urls/:shortCode', async (c) => {
   return c.json({ message: 'URL deleted successfully' }, 200)
 })
 
-// Create a new custom domain mapping
-app.post('/api/domains', zValidator('json', customDomainSchema), async (c) => {
-  const { domain, target } = c.req.valid('json')
-  await c.env.CUSTOM_DOMAINS.put(domain, target)
-  return c.json({ message: 'Custom domain added successfully' }, 201)
-})
-
 // Redirect the main domain to another domain
 app.get('/', (c) => {
   const redirectUrl = c.env.REDIRECT_URL
@@ -275,13 +261,6 @@ app.get('/:shortCode', async (c) => {
   }
   const urlData = await c.env.URL_MAPPINGS.get(shortCode)
   if (!urlData) {
-    const customDomain = c.req.header('host')
-    if (customDomain) {
-      const targetUrl = await c.env.CUSTOM_DOMAINS.get(customDomain)
-      if (targetUrl) {
-        return c.redirect(targetUrl)
-      }
-    }
     return c.notFound()
   }
   try {

@@ -13,7 +13,6 @@ A simple and efficient URL shortener built with Cloudflare Workers, Hono, and Ty
 - Expiration time for short URLs
 - Rate limiting to prevent abuse
 - Input validation and error handling
-- Custom domain support
 - Update and delete short URLs
 - CORS support with configurable allowed origins
 - Caching of URL mappings for faster access
@@ -25,6 +24,7 @@ A simple and efficient URL shortener built with Cloudflare Workers, Hono, and Ty
 - Error handling for fetching and extracting OpenGraph metadata
 - Validation of OpenGraph metadata to ensure valid formats
 - Encoding of OpenGraph metadata values to prevent cross-site scripting (XSS) attacks
+- CSRF protection for API endpoints
 
 ## Prerequisites
 

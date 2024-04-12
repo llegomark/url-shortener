@@ -7,7 +7,6 @@ kv_namespaces = [
   { binding = "URL_MAPPINGS", id = "" },
   { binding = "URL_ANALYTICS", id = "" },
   { binding = "API_KEYS", id = "" },
-  { binding = "CUSTOM_DOMAINS", id = "" },
   { binding = "OG_METADATA_CACHE", id = "" }
 ]
 
