@@ -5,6 +5,7 @@ import { nanoid } from 'nanoid'
 import { cache } from 'hono/cache'
 import { cors } from 'hono/cors'
 import { escape } from 'html-escaper'
+import { csrf } from 'hono/csrf'
 
 type Env = {
   URL_MAPPINGS: KVNamespace
@@ -18,19 +19,8 @@ type Env = {
 
 const app = new Hono<{ Bindings: Env }>()
 
-// Enable CORS for specific origins based on environment variable
-// app.use('*', cors({
-//   origin: (origin, c) => {
-//     const allowedOrigins = c.env.ALLOWED_CORS_ORIGINS.split(',').map((o: string) => o.trim());
-//     const isAllowed = allowedOrigins.includes(origin);
-//     if (!isAllowed) {
-//       console.error(`CORS error: Origin '${origin}' is not allowed.`);
-//     }
-//     return isAllowed;
-//   }
-// }));
-
 app.use('*', cors())
+app.use('/api/*', csrf())
 
 // Custom error handling
 app.onError((err, c) => {
@@ -103,16 +93,13 @@ const fetchOpenGraphMetadata = async (url: string, c: Context): Promise<{
 }> => {
   const cacheKey = `og_metadata:${url}`
   const cachedMetadata = await c.env.OG_METADATA_CACHE.get(cacheKey)
-
   if (cachedMetadata) {
     return JSON.parse(cachedMetadata)
   }
-
   let ogTitle = ''
   let ogDescription = ''
   let ogImage = ''
   let titleText = ''
-
   const rewriter = new HTMLRewriter()
     .on('meta[property="og:title"]', {
       element(element) {
@@ -134,7 +121,6 @@ const fetchOpenGraphMetadata = async (url: string, c: Context): Promise<{
         titleText += text.text
       }
     })
-
   try {
     const response = await fetch(url)
     if (!response.ok) {
@@ -148,7 +134,6 @@ const fetchOpenGraphMetadata = async (url: string, c: Context): Promise<{
     ogDescription = 'No description available'
     ogImage = 'https://via.placeholder.com/1200x630?text=No+Image'
   }
-
   // Validate OpenGraph metadata
   const isValidUrl = (str: string) => {
     try {
@@ -158,32 +143,26 @@ const fetchOpenGraphMetadata = async (url: string, c: Context): Promise<{
       return false
     }
   }
-
   if (!isValidUrl(ogImage)) {
     ogImage = 'https://via.placeholder.com/1200x630?text=No+Image'
   }
-
   const metadata = {
     ogTitle,
     ogDescription,
     ogImage
   }
-
   await c.env.OG_METADATA_CACHE.put(cacheKey, JSON.stringify(metadata), {
     expirationTtl: 3600 // Cache for 1 hour
   })
-
   return metadata
 }
 
 // Create a new short URL
 app.post('/api/urls', zValidator('json', createUrlSchema), async (c) => {
   const { url, customCode, expiresIn, ogTitle, ogDescription, ogImage } = c.req.valid('json')
-
   const { ogTitle: finalOgTitle, ogDescription: finalOgDescription, ogImage: finalOgImage } = ogTitle && ogDescription && ogImage
     ? { ogTitle, ogDescription, ogImage }
     : await fetchOpenGraphMetadata(url, c)
-
   const { keys } = await c.env.URL_MAPPINGS.list()
   const existingShortCode = await Promise.all(
     keys.map(async (key) => {
