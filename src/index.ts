@@ -6,6 +6,7 @@ import { cache } from 'hono/cache'
 import { cors } from 'hono/cors'
 import { prettyJSON } from 'hono/pretty-json'
 import { logger } from 'hono/logger'
+import { escape } from 'html-escaper'
 
 type Env = {
   URL_MAPPINGS: KVNamespace
@@ -14,6 +15,7 @@ type Env = {
   CUSTOM_DOMAINS: KVNamespace
   REDIRECT_URL: string
   ALLOWED_CORS_ORIGINS: string
+  OG_METADATA_CACHE: KVNamespace
 }
 
 const app = new Hono<{ Bindings: Env }>()
@@ -82,45 +84,92 @@ const updateUrlSchema = z.object({
 
 const generateShortCode = () => nanoid(8)
 
+const fetchOpenGraphMetadata = async (url: string, c: Context): Promise<{
+  ogTitle: string
+  ogDescription: string
+  ogImage: string
+}> => {
+  const cacheKey = `og_metadata:${url}`
+  const cachedMetadata = await c.env.OG_METADATA_CACHE.get(cacheKey)
+
+  if (cachedMetadata) {
+    return JSON.parse(cachedMetadata)
+  }
+
+  let ogTitle = ''
+  let ogDescription = ''
+  let ogImage = ''
+  let titleText = ''
+
+  const rewriter = new HTMLRewriter()
+    .on('meta[property="og:title"]', {
+      element(element) {
+        ogTitle = element.getAttribute('content') || ''
+      },
+    })
+    .on('meta[property="og:description"]', {
+      element(element) {
+        ogDescription = element.getAttribute('content') || ''
+      },
+    })
+    .on('meta[property="og:image"]', {
+      element(element) {
+        ogImage = element.getAttribute('content') || ''
+      },
+    })
+    .on('title', {
+      text(text) {
+        titleText += text.text
+      }
+    })
+
+  try {
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch OpenGraph metadata: ${response.status}`)
+    }
+    await rewriter.transform(response).arrayBuffer()
+  } catch (error) {
+    console.error('Error fetching OpenGraph metadata:', error)
+    // Fallback values
+    ogTitle = titleText || 'Untitled'
+    ogDescription = 'No description available'
+    ogImage = 'https://via.placeholder.com/1200x630?text=No+Image'
+  }
+
+  // Validate OpenGraph metadata
+  const isValidUrl = (str: string) => {
+    try {
+      new URL(str)
+      return true
+    } catch (error) {
+      return false
+    }
+  }
+
+  if (!isValidUrl(ogImage)) {
+    ogImage = 'https://via.placeholder.com/1200x630?text=No+Image'
+  }
+
+  const metadata = {
+    ogTitle,
+    ogDescription,
+    ogImage
+  }
+
+  await c.env.OG_METADATA_CACHE.put(cacheKey, JSON.stringify(metadata), {
+    expirationTtl: 3600 // Cache for 1 hour
+  })
+
+  return metadata
+}
+
 app.post('/api/urls', zValidator('json', createUrlSchema), async (c) => {
   const { url, customCode, expiresIn, ogTitle, ogDescription, ogImage } = c.req.valid('json')
 
-  let finalOgTitle = ogTitle
-  let finalOgDescription = ogDescription
-  let finalOgImage = ogImage
-
-  if (!ogTitle || !ogDescription || !ogImage) {
-    let titleText = ''
-  
-    const rewriter = new HTMLRewriter()
-      .on('meta[property="og:title"]', {
-        element(element) {
-          finalOgTitle = element.getAttribute('content') || ''
-        },
-      })
-      .on('meta[property="og:description"]', {
-        element(element) {
-          finalOgDescription = element.getAttribute('content') || ''
-        },
-      })
-      .on('meta[property="og:image"]', {
-        element(element) {
-          finalOgImage = element.getAttribute('content') || ''
-        },
-      })
-      .on('title', {
-        text(text) {
-          titleText += text.text
-        }
-      })
-  
-    try {
-      const response = await fetch(url)
-      await rewriter.transform(response).arrayBuffer()
-    } catch (error) {
-      console.error('Error fetching OpenGraph metadata:', error)
-    }
-  }
+  const { ogTitle: finalOgTitle, ogDescription: finalOgDescription, ogImage: finalOgImage } = ogTitle && ogDescription && ogImage
+    ? { ogTitle, ogDescription, ogImage }
+    : await fetchOpenGraphMetadata(url, c)
 
   const { keys } = await c.env.URL_MAPPINGS.list()
   const existingShortCode = await Promise.all(
@@ -197,16 +246,16 @@ app.get('/:shortCode/og', async (c) => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>${ogTitle || 'Untitled'}</title>
-          <meta property="og:title" content="${ogTitle || 'Untitled'}" />
-          <meta property="og:description" content="${ogDescription || ''}" />
-          <meta property="og:image" content="${ogImage || ''}" />
-          <meta property="og:url" content="${url}" />
+          <title>${escape(ogTitle || 'Untitled')}</title>
+          <meta property="og:title" content="${escape(ogTitle || 'Untitled')}" />
+          <meta property="og:description" content="${escape(ogDescription || '')}" />
+          <meta property="og:image" content="${escape(ogImage || '')}" />
+          <meta property="og:url" content="${escape(url)}" />
           <meta property="og:type" content="website" />
         </head>
         <body>
           <script>
-            window.location.href = '${url}';
+            window.location.href = '${escape(url)}';
           </script>
         </body>
       </html>
