@@ -19,6 +19,12 @@ A simple and efficient URL shortener built with Cloudflare Workers, Hono, and Ty
 - Caching of URL mappings for faster access
 - Logging for better debugging and monitoring
 - Pretty JSON formatting for API responses
+- OpenGraph metadata support for rich previews when sharing short URLs on social media platforms
+- Fallback values for missing OpenGraph metadata
+- Caching of OpenGraph metadata to improve performance
+- Error handling for fetching and extracting OpenGraph metadata
+- Validation of OpenGraph metadata to ensure valid formats
+- Encoding of OpenGraph metadata values to prevent cross-site scripting (XSS) attacks
 
 ## Prerequisites
 
@@ -47,6 +53,7 @@ A simple and efficient URL shortener built with Cloudflare Workers, Hono, and Ty
    - `URL_ANALYTICS`: Stores the click analytics for each short URL
    - `API_KEYS`: Stores the API keys for authentication
    - `CUSTOM_DOMAINS`: Stores the custom domain mappings
+   - `OG_METADATA_CACHE`: Stores the cached OpenGraph metadata
 
    Update the `wrangler.toml` file with the appropriate namespace bindings.
 
@@ -146,9 +153,16 @@ A simple and efficient URL shortener built with Cloudflare Workers, Hono, and Ty
 
     Replace `your-api-key` with your actual API key.
 
+## OpenGraph Metadata Support
+
+The URL shortener now supports OpenGraph metadata for rich previews when sharing short URLs on social media platforms. When creating a short URL, you can optionally provide the OpenGraph metadata (`ogTitle`, `ogDescription`, `ogImage`) in the request payload. If the metadata is not provided, the system will attempt to fetch it from the original URL.
+
+The fetched OpenGraph metadata is cached for improved performance, and fallback values are used if the metadata is missing or invalid. The metadata values are properly encoded to prevent cross-site scripting (XSS) attacks.
+
 ## Setting Expiration Time
 
 To set an expiration time for a short URL, include the `expiresIn` parameter in the request payload when creating the short URL. The value should be in seconds.
+
 For example, to create a short URL that expires in 1 hour (3600 seconds):
 
 ```bash
@@ -156,6 +170,7 @@ curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer your-
 ```
 
 If the `expiresIn` parameter is not provided, the short URL will not have an expiration time and will remain valid indefinitely.
+
 When a short URL with an expiration time is accessed after its expiration, a 404 (Not Found) error will be returned, and the short URL will be automatically deleted from the system.
 
 ## Deployment
