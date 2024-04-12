@@ -145,14 +145,14 @@ app.get('/:shortCode', cache({ cacheName: 'url-cache', cacheControl: 'max-age=36
 })
 
 // Get URL analytics with pretty JSON formatting
-app.get('/api/analytics/:shortCode', prettyJSON(), async (c) => {
+app.get('/api/analytics/:shortCode', apiKeyAuth, prettyJSON(), async (c) => {
   const shortCode = c.req.param('shortCode')
   const clickCount = await c.env.URL_ANALYTICS.get(shortCode)
   return c.json({ shortCode, clickCount: clickCount ? parseInt(clickCount) : 0 })
 })
 
 // Get overall analytics and metrics
-app.get('/api/analytics', prettyJSON(), async (c) => {
+app.get('/api/analytics', apiKeyAuth, prettyJSON(), async (c) => {
   const totalClicks = await c.env.URL_ANALYTICS.get('total_clicks')
   const topUrls = await c.env.URL_ANALYTICS.list({ prefix: 'top_urls_' })
   // Implement logic to retrieve and format overall analytics data
