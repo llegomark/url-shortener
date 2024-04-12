@@ -8,11 +8,11 @@
     "deploy": "wrangler deploy --minify src/index.ts"
   },
   "repository": {
-		"type": "git",
-		"url": "https://github.com/llegomark/url-shortener.git"
-	},
+    "type": "git",
+    "url": "https://github.com/llegomark/url-shortener.git"
+  },
   "author": "Mark Anthony Llego",
-	"license": "MIT",
+  "license": "MIT",
   "dependencies": {
     "@hono/zod-validator": "^0.2.1",
     "hono": "^4.2.3",
