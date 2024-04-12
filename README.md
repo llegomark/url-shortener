@@ -153,6 +153,37 @@ A simple and efficient URL shortener built with Cloudflare Workers, Hono, and Ty
 
     Replace `your-api-key` with your actual API key.
 
+## Frontend
+
+The URL Shortener also comes with a user-friendly frontend built with React, TypeScript, Vite, and Tailwind CSS. The frontend provides an intuitive interface for users to interact with the URL shortening service.
+
+### Frontend Features
+
+- Shorten long URLs into compact, easy-to-share short URLs
+- Update and delete short URLs
+- View click analytics for each short URL
+- Responsive design for optimal viewing on various devices
+- API key authentication for secure access to the backend API
+- Option to use environment variables for the API base URL and API key
+- Input validation and error handling
+- Copy short URLs to clipboard with a single click
+- Loading states and error messages for better user experience
+- Styled with Tailwind CSS for a modern and visually appealing interface
+
+### Frontend Repository
+
+The frontend code is maintained in a separate repository. You can find the frontend repository at:
+
+[URL Shortener Frontend](https://github.com/llegomark/url-shortener-frontend)
+
+Please refer to the frontend repository for detailed instructions on setting up and running the frontend application.
+
+### Integration with Backend
+
+The frontend communicates with the URL Shortener backend API to perform various operations such as creating short URLs, updating and deleting URLs, and retrieving click analytics. It sends requests to the backend API endpoints using the appropriate HTTP methods and headers.
+
+Make sure to configure the frontend with the correct backend API URL and API key to establish a successful connection between the frontend and backend.
+
 ## OpenGraph Metadata Support
 
 The URL shortener now supports OpenGraph metadata for rich previews when sharing short URLs on social media platforms. When creating a short URL, you can optionally provide the OpenGraph metadata (`ogTitle`, `ogDescription`, `ogImage`) in the request payload. If the metadata is not provided, the system will attempt to fetch it from the original URL.
