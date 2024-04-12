@@ -4,8 +4,6 @@ import { zValidator } from '@hono/zod-validator'
 import { nanoid } from 'nanoid'
 import { cache } from 'hono/cache'
 import { cors } from 'hono/cors'
-import { prettyJSON } from 'hono/pretty-json'
-import { logger } from 'hono/logger'
 import { escape } from 'html-escaper'
 
 type Env = {
@@ -21,15 +19,18 @@ type Env = {
 const app = new Hono<{ Bindings: Env }>()
 
 // Enable CORS for specific origins based on environment variable
-app.use('*', cors({
-  origin: (origin, c) => {
-    const allowedOrigins = c.env.ALLOWED_CORS_ORIGINS.split(',')
-    return allowedOrigins.includes(origin)
-  }
-}))
+// app.use('*', cors({
+//   origin: (origin, c) => {
+//     const allowedOrigins = c.env.ALLOWED_CORS_ORIGINS.split(',').map((o: string) => o.trim());
+//     const isAllowed = allowedOrigins.includes(origin);
+//     if (!isAllowed) {
+//       console.error(`CORS error: Origin '${origin}' is not allowed.`);
+//     }
+//     return isAllowed;
+//   }
+// }));
 
-// Enable logging for all routes
-app.use('*', logger())
+app.use('*', cors())
 
 // Custom error handling
 app.onError((err, c) => {
@@ -323,14 +324,14 @@ app.get('/:shortCode', async (c) => {
 })
 
 // Get analytics for a specific short URL
-app.get('/api/analytics/:shortCode', prettyJSON(), async (c) => {
+app.get('/api/analytics/:shortCode', async (c) => {
   const shortCode = c.req.param('shortCode')
   const clickCount = await c.env.URL_ANALYTICS.get(shortCode)
   return c.json({ shortCode, clickCount: clickCount ? parseInt(clickCount) : 0 })
 })
 
 // Get analytics for all short URLs
-app.get('/api/analytics', prettyJSON(), async (c) => {
+app.get('/api/analytics', async (c) => {
   const totalClicks = await c.env.URL_ANALYTICS.get('total_clicks')
   const topUrls = await c.env.URL_ANALYTICS.list({ prefix: 'top_urls_' })
   return c.json({ totalClicks, topUrls })
