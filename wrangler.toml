@@ -1,17 +1,19 @@
 name = "url-shortener"
 compatibility_date = "2024-04-11"
-workers_dev = true
+workers_dev = false
 main = "src/index.ts"
 
 kv_namespaces = [
   { binding = "URL_MAPPINGS", id = "" },
   { binding = "URL_ANALYTICS", id = "" },
   { binding = "API_KEYS", id = "" },
-  { binding = "CUSTOM_DOMAINS", id = "" }
+  { binding = "CUSTOM_DOMAINS", id = "" },
+  { binding = "OG_METADATA_CACHE", id = "" }
 ]
 
 [vars]
-REDIRECT_URL = "https://www.google.com"
+REDIRECT_URL = ""
+ALLOWED_CORS_ORIGINS = ""
 
 # [[r2_buckets]]
 # binding = "MY_BUCKET"
